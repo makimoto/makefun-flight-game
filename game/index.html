@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky Harbor — Island Mail Run</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game" width="1280" height="800"></canvas>
+
+<div id="start-overlay" class="overlay">
+  <div class="card">
+    <div class="kicker">✉ SKY HARBOR AIR POST</div>
+    <h1>Island Mail Run</h1>
+    <p class="story">One aeroplane, one bag of mail, six glowing rings and a lighthouse
+    keeper waiting on his parcel. Take off from Sky Harbor, thread the mail rings,
+    drop the parcel low over Beacon Islet, and bring the Petrel home into the wind —
+    watching your fuel all the way.</p>
+    <div class="controls">
+      <div><b>W / S</b> throttle up / down</div>
+      <div><b>↓ / ↑</b> climb / descend</div>
+      <div><b>← / →</b> or <b>A / D</b> bank &amp; turn</div>
+      <div><b>Q / E</b> rudder</div>
+      <div><b>Mouse</b> steer · <b>wheel</b> throttle</div>
+    </div>
+    <button id="start-btn" type="button">▶ START THE MAIL RUN</button>
+    <p class="hint">Full throttle, rotate past 55 kt. Rings pay by how centrally you
+    thread them. A bent landing costs hull — and hull is score.</p>
+  </div>
+</div>
+
+<div id="end-overlay" class="overlay hidden">
+  <div class="card">
+    <div class="kicker">✉ SKY HARBOR AIR POST · FLIGHT REPORT</div>
+    <h1 id="end-title">MAIL DELIVERED</h1>
+    <div id="end-grade">A</div>
+    <div id="end-stats"></div>
+    <button id="again-btn" type="button">↻ FLY THE RUN AGAIN</button>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+/* Sky Harbor — Island Mail Run: page and overlay styling.
+   The game itself is all canvas; this file only frames it and
+   dresses the start / flight-report cards. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0a1420;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #eaf7ff;
+}
+
+#game {
+  display: block;
+  margin: 0 auto;
+  width: min(100vw, 1280px);
+  height: min(100vh, 800px);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 12, 22, 0.55);
+  z-index: 5;
+}
+
+.overlay.hidden { display: none; }
+
+.card {
+  width: min(620px, 92vw);
+  max-height: 92vh;
+  overflow: auto;
+  background: linear-gradient(160deg, #10283f 0%, #0a1a2c 70%);
+  border: 2px solid rgba(140, 200, 235, 0.55);
+  border-radius: 18px;
+  padding: 30px 36px 26px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+}
+
+.kicker {
+  letter-spacing: 0.22em;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffd23e;
+}
+
+.card h1 {
+  margin: 8px 0 10px;
+  font-size: 40px;
+  line-height: 1.05;
+}
+
+.story { font-size: 15.5px; line-height: 1.55; color: #cfe6f5; }
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 18px;
+  margin: 16px auto 20px;
+  max-width: 480px;
+  text-align: left;
+  font-size: 14px;
+  color: #a9cadd;
+}
+
+.controls b { color: #fff; }
+
+.card button {
+  background: #c8402a;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 34px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(200, 64, 42, 0.45);
+}
+
+.card button:hover { background: #e04c33; }
+
+.hint { font-size: 13px; color: #8fb4c9; margin-bottom: 2px; }
+
+#end-grade {
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffd23e;
+  text-shadow: 0 4px 24px rgba(255, 210, 62, 0.4);
+  margin: 2px 0 12px;
+}
+
+#end-stats { text-align: left; margin: 0 auto 20px; max-width: 480px; }
+
+#end-stats .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 2px;
+  border-bottom: 1px solid rgba(140, 200, 235, 0.18);
+  font-size: 14.5px;
+  color: #cfe6f5;
+}
+
+#end-stats .row b { color: #fff; white-space: nowrap; }
+
+#end-stats .row.total {
+  border-bottom: none;
+  font-size: 19px;
+  padding-top: 10px;
+}
+
+#end-stats .row.total b { color: #ffd23e; }
