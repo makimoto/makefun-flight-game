@@ -33,6 +33,7 @@ export function createSortie() {
     ringSplits: [], // {name, offset} per ring, from the real crossing
     dropped: false,
     dropOffset: null,
+    dropPoints: null,
     landing: null, // judgeTouchdown result once down
     takeoffClean: false,
     message: 'Throttle up with W. Rotate with ↓ past 55 kt.',
@@ -118,9 +119,14 @@ export function stepMission(sortie, plane, planeEvents, dt) {
     if ((leaving || d < 55) && plane.alt <= DROP_ZONE.maxAlt && sortie._dropClosest != null) {
       sortie.dropped = true;
       sortie.dropOffset = Math.round(sortie._dropClosest);
-      sortie.score += SCORING.dropScore;
+      // The drop pays like a ring does: a base for delivering at all,
+      // plus a centre bonus that fades with the miss distance — a
+      // 54 m pass earns well, but never the dead-centre money.
+      const closeness = Math.max(0, 1 - sortie._dropClosest / DROP_ZONE.radius);
+      sortie.dropPoints = Math.round(SCORING.dropBase + SCORING.dropCenterBonus * closeness);
+      sortie.score += sortie.dropPoints;
       sortie.phase = PHASES.LANDING;
-      say(sortie, 'Parcel away! Now bring her home — land northbound on the strip.');
+      say(sortie, `Parcel away — ${sortie.dropOffset} m from the light, +${sortie.dropPoints}! Now bring her home.`);
     }
   }
 
@@ -202,8 +208,17 @@ export function currentTarget(sortie, plane) {
   if (sortie.phase === PHASES.DROP) {
     return { x: DROP_ZONE.x, z: DROP_ZONE.z, alt: 70, label: 'DROP · BEACON ISLET' };
   }
-  if (plane && !(plane.z > 1000 && Math.abs(plane.x) < 280)) {
-    return { x: 0, z: 1250, alt: 120, label: 'APPROACH FIX · SOUTH' };
+  // Landing: once the plane is south of the field, roughly on the
+  // centreline, it is on final — the target is the threshold itself.
+  // Only a plane still out of position routes via the approach fix;
+  // pointing a pilot on final back at the fix behind them was the
+  // old arrow bug (arrow hard right with the runway dead ahead).
+  if (plane) {
+    const onFinal = plane.z > 210 && Math.abs(plane.x) < 280;
+    if (!onFinal && !(plane.z > 1000 && Math.abs(plane.x) < 280)) {
+      return { x: 0, z: 1250, alt: 120, label: 'APPROACH FIX · SOUTH' };
+    }
+    if (plane.z <= 210) return { x: 0, z: -420, alt: 16, label: 'LAND · SKY HARBOR RWY 36' };
   }
   return { x: 0, z: 210, alt: 16, label: 'LAND · SKY HARBOR RWY 36' };
 }

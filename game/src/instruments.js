@@ -161,7 +161,11 @@ export function drawInstruments(ctx, plane, sortie, w, h) {
   ctx.fillStyle = '#eaf7ff';
   ctx.font = '800 17px system-ui, sans-serif';
   ctx.textAlign = 'center';
-  for (let d = -60; d <= 60; d += 10) {
+  // Labels only where they fit whole inside the tape: at ±60 the
+  // two-digit labels were centre-clipped by the window and rendered
+  // as stray strokes ("31" showed as "I") with a dark clipped glyph
+  // blob at the right edge. ±40 keeps every label fully inside.
+  for (let d = -40; d <= 40; d += 10) {
     const heading = ((Math.round(plane.headingDeg / 10) * 10 + d) % 360 + 360) % 360;
     const x = w / 2 + d * 3.4;
     const label =
@@ -186,7 +190,9 @@ export function drawInstruments(ctx, plane, sortie, w, h) {
   const target = currentTarget(sortie, plane);
   const err = headingErrorTo(plane, target);
   if (Math.abs(err) <= 58) {
-    const x = w / 2 + err * 3.4;
+    // Clamp inside the tape window: an unclamped caret at the rim
+    // drew a dark half-glyph outside the box that read as a blob.
+    const x = Math.max(tapeX + 14, Math.min(tapeX + 326, w / 2 + err * 3.4));
     ctx.fillStyle = '#2eff7b';
     ctx.beginPath();
     ctx.moveTo(x, panelY + 62);
@@ -270,16 +276,35 @@ export function drawHud(ctx, plane, sortie, w, h) {
   } else {
     ctx.fillText(`➤ ${target.label} · ${Math.round(dist)} m`, 26, 82);
   }
-  // Ring pips.
-  for (let i = 0; i < RINGS.length; i++) {
+  // Mission progress: eight stages — the six rings, then the drop,
+  // then the landing — so Acts 3 and 4 show on the board too, not
+  // just in the phase line. Drop pip carries a parcel mark, the
+  // landing pip a runway tick.
+  const stageState = (i) => {
+    if (i < RINGS.length) {
+      return i < sortie.ringIndex || sortie.phase === PHASES.DROP || sortie.phase === PHASES.LANDING || sortie.phase === PHASES.DONE
+        ? 'done'
+        : sortie.phase === PHASES.RINGS && i === sortie.ringIndex
+          ? 'next'
+          : 'todo';
+    }
+    if (i === RINGS.length) {
+      return sortie.dropped ? 'done' : sortie.phase === PHASES.DROP ? 'next' : 'todo';
+    }
+    return sortie.phase === PHASES.DONE ? 'done' : sortie.phase === PHASES.LANDING ? 'next' : 'todo';
+  };
+  for (let i = 0; i < RINGS.length + 2; i++) {
+    const cx = 38 + i * 25;
+    const st = stageState(i);
     ctx.beginPath();
-    ctx.arc(38 + i * 26, 106, 8, 0, Math.PI * 2);
-    ctx.fillStyle = i < sortie.ringIndex || sortie.phase === PHASES.DROP || sortie.phase === PHASES.LANDING
-      ? '#50dc8c'
-      : i === sortie.ringIndex
-        ? '#ffd23e'
-        : 'rgba(255,255,255,0.25)';
+    ctx.arc(cx, 106, 8, 0, Math.PI * 2);
+    ctx.fillStyle = st === 'done' ? '#50dc8c' : st === 'next' ? '#ffd23e' : 'rgba(255,255,255,0.25)';
     ctx.fill();
+    ctx.fillStyle = st === 'todo' ? 'rgba(255,255,255,0.55)' : '#0c1420';
+    ctx.font = '800 9px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    if (i === RINGS.length) ctx.fillText('✉', cx, 109);
+    if (i === RINGS.length + 1) ctx.fillText('▼', cx, 109);
   }
 
   // Score panel, top-right.
@@ -309,15 +334,20 @@ export function drawHud(ctx, plane, sortie, w, h) {
     ctx.fillText(sortie.message, w / 2, 168);
   }
 
-  // Big steering arrow toward the target when it is off the nose.
+  // Big steering arrow: rotated to the target's actual relative
+  // bearing, so it points where the target really is — ahead-right,
+  // hard left, even behind — instead of flipping left/right beside
+  // the nose regardless of the geometry.
   const err = headingErrorTo(plane, target);
   if (!sortie.finished && Math.abs(err) > 14) {
     ctx.fillStyle = 'rgba(255,210,62,0.92)';
     ctx.font = '900 40px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.save();
-    ctx.translate(w / 2 + Math.sign(err) * 130, 232);
-    if (err < 0) ctx.scale(-1, 1);
+    ctx.translate(w / 2, 226);
+    // ➤ glyph points +x (right); screen-ahead is up. Bearing err is
+    // clockwise from the nose, matching canvas rotation.
+    ctx.rotate(((err - 90) * Math.PI) / 180);
     ctx.fillText('➤', 0, 14);
     ctx.restore();
   }

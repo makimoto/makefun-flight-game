@@ -74,6 +74,30 @@ function buildTrees() {
 }
 export const TREES = buildTrees();
 
+// Grass mottling: darker meadow patches scattered on the islands
+// (deterministic), so the domes do not read as one flat billiard
+// cloth. Each patch sits inside its island's rim.
+export const PATCHES = [];
+{
+  let seed = 53;
+  const rnd = () => {
+    seed = (seed * 48271) % 2147483647;
+    return seed / 2147483647;
+  };
+  for (const isl of ISLANDS) {
+    for (let i = 0; i < 15; i++) {
+      const a = rnd() * Math.PI * 2;
+      const rr = Math.sqrt(rnd()) * 0.78;
+      PATCHES.push({
+        x: isl.x + Math.cos(a) * isl.rx * rr,
+        z: isl.z + Math.sin(a) * isl.rz * rr,
+        r: 90 + rnd() * 190,
+        tone: rnd(),
+      });
+    }
+  }
+}
+
 // Clouds: soft billboards drifting slowly east.
 export const CLOUDS = [];
 {

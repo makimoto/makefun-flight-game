@@ -7,7 +7,7 @@
 
 import { createAircraft } from './aircraft.js';
 import { stepFlight, angleDeltaDeg } from './physics.js';
-import { createSortie, stepMission, currentTarget, bearingTo, RINGS } from './missions.js';
+import { createSortie, stepMission, currentTarget, bearingTo, headingErrorTo, DROP_ZONE, RINGS } from './missions.js';
 import { groundHeightAt } from './terrain.js';
 import { WORLD } from './config.js';
 
@@ -113,8 +113,19 @@ export function simulateCanonicalFlight(onStep, maxSteps = 60 * 60 * 6) {
 // Scene definitions: each is a predicate over the live simulation.
 export const SHOT_SCENES = {
   cover(plane, sortie) {
-    // Just airborne: gear still down, ring 1 dead ahead, strip below.
-    return !plane.onGround && plane.alt > 62 && sortie.ringIndex === 0;
+    // The Act 3 drop approach (Quick review: the old takeoff cover
+    // was 40% grey runway with no sea in frame): low over the sea on
+    // the run-in to Beacon Islet, lighthouse and drop marker ahead,
+    // gear down, the whole panel lit. A real frame of the same
+    // canonical flight — the sim simply runs on into the DROP phase.
+    if (sortie.phase !== 'DROP' || plane.onGround) return false;
+    const dist = Math.hypot(plane.x - DROP_ZONE.x, plane.z - DROP_ZONE.z);
+    return (
+      dist > 340 &&
+      dist < 560 &&
+      plane.alt <= DROP_ZONE.maxAlt &&
+      Math.abs(headingErrorTo(plane, DROP_ZONE)) < 22
+    );
   },
   rings(plane, sortie, step, before) {
     // The frame the fifth ring is crossed: turning for home over the

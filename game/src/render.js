@@ -4,7 +4,7 @@
 // building on screen is the same world object the physics can hit.
 
 import { CAMERA } from './config.js';
-import { CLOUDS, DEPOT, ISLANDS, LIGHTHOUSE, MOUNTAINS, TOWN, TREES, groundHeightAt, islandHeightAt } from './terrain.js';
+import { CLOUDS, DEPOT, ISLANDS, LIGHTHOUSE, MOUNTAINS, PATCHES, TOWN, TREES, groundHeightAt, islandHeightAt } from './terrain.js';
 import { RINGS, RING_RADIUS } from './missions.js';
 import { drawAircraft } from './aircraft.js';
 
@@ -142,6 +142,17 @@ export function drawScene(ctx, plane, sortie, w, h, timeMs) {
     }
   }
 
+  // Grass mottling: flat darker patches lying on the island domes.
+  for (const p of PATCHES) {
+    if (Math.hypot(p.x - plane.x, p.z - plane.z) > 3400) continue;
+    const y = islandHeightAt(p.x, p.z) + 3.6;
+    if (y < 4) continue;
+    const pts = ellipsePoints(p.x, p.z, p.r, p.r * 0.72, y, 14)
+      .map((q) => project(q[0], q[1], q[2], true))
+      .filter(Boolean);
+    if (pts.length >= 3) poly(ctx, pts, p.tone > 0.5 ? 'rgba(46,102,50,0.35)' : 'rgba(126,166,80,0.30)');
+  }
+
   // Mountains: cones with snow caps.
   const mountsSorted = [...MOUNTAINS].sort(
     (a, b) => Math.hypot(b.x - plane.x, b.z - plane.z) - Math.hypot(a.x - plane.x, a.z - plane.z),
@@ -247,14 +258,17 @@ export function drawScene(ctx, plane, sortie, w, h, timeMs) {
     }
   }
 
-  // Mail rings: the next one burns gold, the rest wait in cyan.
+  // Mail rings: only rings still to fly are drawn — the next one
+  // burns gold, the rest wait in cyan. A passed ring vanishes: in the
+  // old build the whole spent course floated over the landing shot
+  // and read as live targets that were not there.
   RINGS.forEach((ring, i) => {
     const state = i < sortie.ringIndex || sortie.phase === 'DROP' || sortie.phase === 'LANDING' || sortie.phase === 'DONE'
       ? 'done'
       : i === sortie.ringIndex
         ? 'next'
         : 'todo';
-    drawRing(ctx, project, ring, state, timeMs);
+    if (state !== 'done') drawRing(ctx, project, ring, state, timeMs);
   });
 
   // Drop marker over the lighthouse while the parcel is aboard.
@@ -271,6 +285,30 @@ export function drawScene(ctx, plane, sortie, w, h, timeMs) {
       ctx.font = `700 ${Math.max(13, r * 0.5)}px system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillText('▼ DROP HERE — FLY LOW', p.x, p.y - r - 8);
+    }
+  }
+
+  // Distance haze: a soft band at the horizon so far terrain melts
+  // into the sky instead of ending in a hard cut.
+  const haze = ctx.createLinearGradient(0, horizonY - 26, 0, horizonY + 150);
+  haze.addColorStop(0, 'rgba(207,232,242,0)');
+  haze.addColorStop(0.35, 'rgba(207,232,242,0.28)');
+  haze.addColorStop(1, 'rgba(207,232,242,0)');
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, horizonY - 26, w, 176);
+
+  // The aircraft's ground shadow: grounds the plane in the world and
+  // quietly reads as height to the eye watching the approach.
+  {
+    const gy = groundHeightAt(plane.x, plane.z);
+    const agl = Math.max(0, plane.alt - gy);
+    const sp = project(plane.x, gy + 0.8, plane.z);
+    if (sp && agl < 320) {
+      const fade = Math.max(0, 1 - agl / 320);
+      ctx.fillStyle = `rgba(18,30,20,${0.34 * fade})`;
+      ctx.beginPath();
+      ctx.ellipse(sp.x, sp.y, Math.max(3, sp.scale * 6.2), Math.max(1.5, sp.scale * 1.9), 0, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 

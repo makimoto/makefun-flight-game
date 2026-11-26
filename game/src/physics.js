@@ -117,6 +117,16 @@ export function stepFlight(plane, input, dt, timeSec) {
     }
   }
 
+  // Gear is a real state with a sensible automatic cycle: down on
+  // the ground and on approach, retracted in the cruise. Altitude
+  // (not AGL) is the trigger, with a hysteresis band so it cannot
+  // chatter: up above 110 m, back down below 95 m. The low drop run
+  // (~74 m) and every landing final stay gear-down; the ring cruise
+  // (115–165 m) flies clean.
+  if (plane.onGround) plane.gearDown = true;
+  else if (plane.alt > 110) plane.gearDown = false;
+  else if (plane.alt < 95) plane.gearDown = true;
+
   plane.propPhase += dt * (4 + plane.throttle * 40);
   return events;
 }

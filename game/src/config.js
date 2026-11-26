@@ -30,7 +30,8 @@ export const PLANE = {
 export const SCORING = {
   ringBase: 300,
   ringCenterBonus: 150, // scaled by how centrally the ring was crossed
-  dropScore: 600,
+  dropBase: 200,
+  dropCenterBonus: 400, // scaled by how close the pass came to the light
   landingPerfect: 600,
   landingGood: 350,
   fuelBonusPerUnit: 6,

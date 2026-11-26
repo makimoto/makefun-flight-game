@@ -63,12 +63,13 @@ function showEnd() {
   const rows = [
     ['Rings threaded', `${sortie.ringsPassed} / 6`],
     ...sortie.ringSplits.map((r) => [`· ${r.name}`, `+${r.gained} (${r.offset} m off centre)`]),
-    ['Parcel drop', sortie.dropped ? `+600 · away, ${sortie.dropOffset} m from the light` : 'not delivered'],
+    ['Parcel drop', sortie.dropped ? `${sortie.dropOffset} m from the light — +${sortie.dropPoints}` : 'not delivered'],
     ['Landing', sortie.landingPoints != null ? `+${sortie.landingPoints} · ${landingText}` : landingText],
     ['Flight time', `${Math.floor(sortie.timeSec / 60)}:${String(Math.floor(sortie.timeSec % 60)).padStart(2, '0')}`],
     ['Fuel left', `${Math.round(plane.fuel)}% → +${sortie.fuelBonus ?? 0}`],
     ['Time bonus', `+${sortie.timeBonus ?? 0}`],
     ['Hull remaining', `${Math.round(plane.hull)}%`],
+    ['Grade scale', 'S needs 3,400+ · A 2,900+ · B 2,300+ · C 1,600+ (parcel delivered)'],
   ];
   stats.innerHTML = rows
     .map(([k, v]) => `<div class="row"><span>${k}</span><b>${v}</b></div>`)
